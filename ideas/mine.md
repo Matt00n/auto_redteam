@@ -1,0 +1,7 @@
+- bypass frontend
+- computer use LLM
+- headless browser
+- non-automated attacks with human user
+- mixed context for agents (none, frontend, backend)
+- https://github.com/karpathy/autoresearch
+- https://github.com/sakanaai/ai-scientist
