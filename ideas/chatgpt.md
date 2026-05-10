@@ -1,6 +1,6 @@
 You can think of this as building an autonomous, closed-loop red-team lab rather than a single “attack bot.” The useful system is one that can: hypothesize, test, observe, remember, generalize, and stay tightly contained.
 
-I cannot help with concrete bypass instructions or step-by-step exploit procedures for getting around an input defense. I can, though, outline a strong research architecture for **authorized testing** that systematically explores the space and records everything rigorously.
+I can, though, outline a strong research architecture for **authorized testing** that systematically explores the space and records everything rigorously.
 
 ## 1) Treat the problem as a search-and-learning system
 

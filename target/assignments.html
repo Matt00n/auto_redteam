@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <title>Text Editor</title>
+    <!--Bootstrap Cdn -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+        integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <!-- fontawesome cdn For Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css"
+        integrity="sha512-PgQMlq+nqFLV4ylk1gwUOgm6CtIIXkKwaIHp/PAIWHzig/lKZSEGKEysh0TCVbHJXCLN7WetD8TFecIky75ZfQ=="
+        crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"
+        integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous" />
+
+    <!-- Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.1/dist/purify.min.js"></script>
+
+    <!-- Optional: highlight.js for code block highlighting (include CSS too) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/lib/common.min.js"></script>
+
+    <!-- PDF Download utilities -->
+    <!-- html2pdf includes jsPDF and html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+
+    <!-- KaTex for rendering formulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js"></script>
+
+    <!--Internal CSS start-->
+    <style>
+        h1,
+        h3 {
+            padding-top: 40px;
+            padding-bottom: 10px;
+            text-align: center;
+            /* color: #511717;  */
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-color: white;
+            /* Light color, change to your desired color f8f9fa */
+            -webkit-user-select: none;
+            /* Chrome, Safari, and Opera */
+            -moz-user-select: none;
+            /* Firefox */
+            -ms-user-select: none;
+            /* Internet Explorer/Edge */
+            user-select: none;
+        }
+
+        section {
+            padding: 5%;
+            padding-top: 0;
+            height: 100vh;
+            /* display: flex;
+            flex-direction: column; */
+        }
+
+        .head-container {
+            display: flex;
+            /* Enables Flexbox */
+            flex-direction: column;
+            /* Stack children vertically */
+            align-items: center;
+            /* Center children horizontally */
+            text-align: center;
+            /* Ensures text is centered */
+            width: 83%;
+            /* Limit the container width to 70% of the window */
+            margin: 0 auto;
+            cursor: pointer;
+            /* Indicates clickable area */
+            padding: 5px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            /* Smooth hover effect */
+        }
+
+        .head-container:hover {
+            background-color: #f9f9f9;
+            /* Light hover effect */
+        }
+
+        /* Always visible section: header and deadline */
+        .always-visible {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .always-visible h3 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .always-visible div {
+            margin: 5px 0;
+            /* Space around the deadline */
+            font-size: 1em;
+        }
+
+        /* Text content (preview and full text) */
+        .text-content {
+            width: 100%;
+            text-align: left;
+            margin-top: 10px;
+            /* Space between deadline and text */
+            margin-bottom: 0;
+            padding-left: 10px;
+
+            font-size: 1.1rem;
+            /* Slightly larger font size (adjust as needed) */
+            font-weight: 300;
+            /* Makes the font thinner (300 is "light") */
+        }
+
+        .preview {
+            /* font-size: 0.9em;
+    color: #555; */
+            display: none;
+            /* Only visible when collapsed */
+        }
+
+        .collapsible-content {
+            display: block;
+            /* Only visible when expanded */
+        }
+
+        /* Toggle indicator below the text */
+        .toggle-indicator {
+            display: none;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #888;
+            margin-top: 0;
+            transition: transform 0.3s ease;
+        }
+
+        /* Collapsed state */
+        .collapsed .preview {
+            display: block;
+            /* Show preview when collapsed */
+        }
+
+        .collapsed .collapsible-content {
+            display: none;
+            /* Hide full text when collapsed */
+        }
+
+        /* Adjust the collapsed and expanded state */
+        .collapsed .toggle-indicator {
+            display: block;
+        }
+
+        /* Header styling */
+        .head-container h3 {
+            margin: 0;
+            /* Remove default margin */
+        }
+
+        .side {
+            margin-left: 0;
+        }
+
+        /* .toolbox {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        } */
+
+        .tooltip-inner {
+            border-radius: 4px !important;
+            /* Round the corners of the tooltip */
+        }
+
+        .tooltip-arrow {
+            display: none !important;
+            /* Hides the tooltip arrow */
+        }
+
+        .tooltip .arrow::before {
+            display: none;
+        }
+
+        button {
+            margin: 2px;
+            border-color: #6d6d6d !important;
+            border: none !important;
+            color: #888888 !important;
+            margin-bottom: 15px;
+            box-shadow: none !important;
+        }
+
+        button:hover {
+            background-color: #d9d9d9 !important;
+            /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
+        }
+
+        .color-picker-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 10px;
+        }
+
+        .color-picker {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            background: none;
+        }
+
+        .color-picker::-webkit-color-swatch,
+        .color-picker::-moz-color-swatch {
+            border: none;
+            border-radius: 50%;
+        }
+
+        .submit-btn {
+            margin-left: 50px;
+            border-color: #275ce3 !important;
+            /* 007bff 275ce3 */
+            background-color: #007bff !important;
+            color: #ffffff !important;
+            border-radius: 30px;
+        }
+
+        .submit-btn:hover {
+            background-color: #204cb9 !important;
+            /* Darken blue for hover */
+        }
+
+        /* textarea { 
+			padding: 3%; 
+			border-color: #957dad; 
+			border-width: thick; 
+		}  */
+
+        textarea#textarea1,
+        #textarea1.form-control,
+        textarea {
+            -webkit-appearance: none !important;
+            appearance: none !important;
+
+            border: 0 none !important;
+            /* no border */
+            border-width: 0 !important;
+            border-style: none !important;
+
+            outline: 0 none !important;
+            /* no outline */
+            box-shadow: none !important;
+            /* no focus ring */
+            -webkit-box-shadow: none !important;
+
+            /* Unified Editor Geometry (Base) */
+            position: relative !important;
+            padding: 30px 40px !important;
+            /* Unified padding */
+            /* border: 1px solid #ced4da;
+            border-radius: 4px; */
+            height: calc(100vh - 250px) !important;
+            /* Height might need adjustment if using max-width */
+            width: 100% !important;
+            max-width: 900px !important;
+            /* Unified max-width */
+            margin-left: auto !important;
+            margin-right: auto !important;
+
+            box-sizing: border-box !important;
+            overflow-y: auto !important;
+            background-color: white !important;
+
+            border-radius: 12px !important;
+            /* Unified radius */
+
+            resize: none !important;
+
+            /* font-family: 'Poppins', sans-serif; */
+            font-size: 1.1rem !important;
+            /* Slightly larger font size (adjust as needed) */
+            font-weight: 200 !important;
+            /* Makes the font thinner (300 is "light") */
+            font-family: monospace !important;
+
+            -webkit-user-select: none !important;
+            /* Chrome, Safari, and Opera */
+            -moz-user-select: none !important;
+            /* Firefox */
+            -ms-user-select: none !important;
+            /* Internet Explorer/Edge */
+            user-select: none !important;
+            /* Non-prefixed version */
+            -webkit-touch-callout: none !important;
+            /* Disable touch callout on iOS */
+            -webkit-user-drag: none !important;
+        }
+
+        /* Hide the gripper in WebKit/Blink (Chrome, Safari, Edge) */
+        textarea#textarea1::-webkit-resizer {
+            display: none !important;
+        }
+
+        /* Hide the gripper in Firefox (Gecko) */
+        textarea#textarea1::-moz-resizer {
+            display: none !important;
+        }
+
+        #textarea1:focus,
+        #textarea1.form-control:focus,
+        textarea:focus {
+            outline: none !important;
+            /* Remove the focus outline */
+            /* box-shadow: 0 0 0 2px rgba(0, 120, 215, 0.5); 
+            border-radius: 4px;  */
+        }
+
+        .flex-box {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Style for the notification box */
+        .notification-box {
+            position: fixed;
+            bottom: 40px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #a7a7a7;
+            /* Green background */
+            color: white;
+            /* White text color */
+            border-radius: 10px;
+            /* Rounded corners */
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            /* Optional: add shadow for depth */
+        }
+
+        /* Style for the checkmark */
+        .notification-box .checkmark {
+            margin-right: 10px;
+            /* Spacing between checkmark and text */
+        }
+
+        .limit-exceeded-box {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background-color: #a7a7a7;
+            /* Grey background */
+            color: white;
+            /* White text color */
+            border-radius: 10px;
+            /* Rounded corners */
+            display: none;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            /* Optional: add shadow for depth */
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.9em;
+            color: #555;
+            padding: 5px 0;
+            border-top: 1px solid #ddd;
+            /* background-color: #d9a9a9; */
+        }
+
+        /* logout button */
+        /* Container to position the button in the top-right corner */
+        .top-right-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            /* Ensure it stays above other content */
+        }
+
+        /* Logout button styling */
+        .logout-button {
+            background: none;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            /* Reduced padding */
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        /* Hover and focus effects for better UX */
+        .logout-button:hover,
+        .logout-button:focus {
+            background-color: #010101;
+            /* Darker red for hover effect */
+            outline: none;
+            /* Remove default browser outline */
+        }
+
+        /* Active state for button press */
+        .logout-button:active {
+            background-color: #e63939;
+            /* Even darker red */
+            transform: scale(0.9);
+            /* Reset scaling */
+        }
+
+        /* formulas */
+        .katex-rendered {
+            padding: 2px 4px;
+            margin: 0 2px;
+            display: inline-block;
+        }
+
+        .mathlive-container {
+            display: inline-block;
+            background-color: transparent !important;
+            border: none !important;
+        }
+
+        .mathlive-container math-field,
+        .mathlive-container math-field-element {
+            background-color: transparent !important;
+            -webkit-user-select: text !important;
+            user-select: text !important;
+        }
+
+        math-field {
+            -webkit-user-select: text !important;
+            user-select: text !important;
+        }
+
+        #wordCountContainer {
+            position: fixed;
+            bottom: 30px;
+            left: 20px;
+            font-size: 14px;
+        }
+
+        .connection-status {
+            position: fixed;
+            bottom: 90px;
+            /* Above word count */
+            left: 20px;
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: none;
+            /* Hidden by default or when Online */
+            z-index: 1000;
+        }
+
+        .status-offline {
+            background-color: #dc3545;
+            color: white;
+            display: block;
+        }
+
+        .status-reconnecting {
+            background-color: #ffc107;
+            color: black;
+            display: block;
+        }
+
+        #markdown-hint {
+            font-size: 0.8rem;
+            font-style: italic;
+            color: #7f7f7f;
+            margin-top: 3px;
+            display: block;
+            width: 100%;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        /* Dark Mode Styles */
+        body.dark-mode {
+            /* 0d0d0d 121212 */
+            background-color: #0d0d0d;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .text-content,
+        body.dark-mode .always-visible,
+        body.dark-mode h1,
+        body.dark-mode h3 {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode textarea#textarea1 {
+            background-color: #0d0d0d !important;
+            /* Matches body background */
+            color: #e0e0e0 !important;
+        }
+
+        body.dark-mode .head-container:hover {
+            background-color: #2c2c2c;
+        }
+
+        body.dark-mode .modal-content {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .modal-header .close {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .btn-outline-secondary {
+            color: #cbd5e0;
+            border-color: #4a5568 !important;
+        }
+
+        body.dark-mode .btn-outline-secondary:hover {
+            background-color: #4a5568 !important;
+            color: #fff !important;
+        }
+
+        body.dark-mode #markdown-hint {
+            color: #a0aec0;
+        }
+
+        body.dark-mode footer {
+            color: #a0aec0;
+            border-top-color: #4a5568;
+        }
+
+        /* Ensure specific hover color in dark mode if needed */
+        body.dark-mode .theme-toggle:hover {
+            color: #ffc107;
+        }
+
+        body.dark-mode hr {
+            border-top-color: #4a5568;
+        }
+
+        /* Dark mode toggle button styles */
+        .theme-toggle {
+            background: none;
+            border: none;
+            border-radius: 8px;
+            /* Smooth rounded corners */
+            padding: 8px 12px;
+            /* Reduced padding */
+            font-size: 16px;
+            /* Legible and modern font size */
+            color: #555;
+            cursor: pointer;
+            width: auto;
+            /* Ensure it's not restricted */
+            margin-right: 8px;
+            /* Reduced margin */
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            /* Subtle shadow */
+            transition: background-color 0.3s ease, transform 0.2s ease, color 0.3s;
+        }
+
+        .theme-toggle:hover,
+        .theme-toggle:focus {
+            background-color: #010101;
+            /* Dark hover effect like logout */
+            color: white;
+            /* Ensure visibility on dark background */
+            outline: none;
+        }
+
+        .theme-toggle:active {
+            background-color: #333;
+            /* Dark grey for active, avoiding Logout's red */
+            transform: scale(0.9);
+        }
+
+        body.dark-mode .theme-toggle {
+            color: #ffc107;
+            /* Yellow for sun/on state */
+        }
+
+        /* Ensure specific hover color in dark mode if needed */
+        body.dark-mode .theme-toggle:hover {
+            color: #ffc107;
+        }
+
+        /* Card View Mode Styles */
+        /* Light Mode Card - Only overrides colors/shadows now */
+        /* Card View Mode Styles */
+        /* Light Mode Card - Only overrides colors/shadows now */
+        body.editor-card-view,
+        body.split-view {
+            /* Split View implies Card background */
+            background-color: #f0f2f5;
+        }
+
+        body.editor-card-view textarea#textarea1 {
+            background-color: white !important;
+            /* Geometry inherited from base */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+            margin-bottom: 20px;
+            /* spacing */
+        }
+
+        /* Dark Mode Card */
+        body.dark-mode.editor-card-view,
+        body.dark-mode.split-view {
+            /* Split View implies Dark Card background */
+            background-color: #0d0d0d;
+        }
+
+        body.dark-mode.editor-card-view textarea#textarea1 {
+            background-color: #1e1e1e !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        /* Adjust toggle button margin */
+        .view-toggle {
+            background: none;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            /* Reduced padding */
+            font-size: 16px;
+            color: #555;
+            cursor: pointer;
+            margin-right: 8px;
+            /* Reduced margin */
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .view-toggle:hover {
+            background-color: #010101;
+            color: white;
+        }
+
+        body.dark-mode .view-toggle {
+            color: #ffc107;
+        }
+
+        .top-right-container {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Split View Styles */
+        body.split-view .editor-split-container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap !important;
+            /* Override .flex-box wrapping */
+            align-items: stretch;
+            justify-content: space-between;
+            gap: 15px;
+            width: 100%;
+            height: calc(100vh - 280px);
+            /* Reduce height to fit footer */
+        }
+
+        body.split-view textarea#textarea1 {
+            width: 50% !important;
+            /* Fallback */
+            flex: 1;
+            /* allow flex growth/shrink */
+            max-width: none !important;
+            margin: 0 !important;
+            height: 100% !important;
+            resize: none !important;
+            border-right: 1px solid #ddd;
+        }
+
+        body.split-view .split-preview-pane {
+            display: block;
+            width: 50%;
+            /* Fallback */
+            flex: 1;
+            /* allow flex growth/shrink */
+            height: 100% !important;
+            overflow-y: auto;
+            background-color: transparent !important;
+            /* Flat on background */
+            padding: 30px 40px;
+            border-radius: 0;
+            border: none;
+            /* No border, no card feel */
+        }
+
+        /* Dark mode adjustments for split pane */
+        body.dark-mode.split-view .split-preview-pane {
+            background-color: #121212;
+            color: #e0e0e0;
+            border-color: #333;
+        }
+
+        body.split-view textarea#textarea1 {
+            /* Ensure consistency - Force card look */
+            background-color: white !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+            border-radius: 12px !important;
+            border: none !important;
+            /* Remove the simple border */
+        }
+
+        body.dark-mode.split-view textarea#textarea1 {
+            background-color: #1e1e1e !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .split-preview-pane {
+            display: none;
+            /* Hidden by default */
+        }
+
+        /* Disable viewToggle when in split view */
+        body.split-view #viewToggle {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+    <!--Internal CSS End-->
+</head>
+<!--Body start-->
+
+<body>
+    <section class="">
+        <div class="top-right-container">
+            <button id="splitToggle" class="view-toggle" onclick="toggleSplitView()" title="Toggle Split View">
+                <i class="fas fa-columns"></i>
+            </button>
+            <button id="viewToggle" class="view-toggle" onclick="toggleViewMode()" title="Toggle Card View">
+                <i class="fas fa-file-alt"></i>
+            </button>
+            <button id="themeToggle" class="theme-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button id="logoutButton" class="logout-button" onclick="logout_user_from_session()">Log Out</button>
+        </div>
+        <div class="head-container" id="collapsible-container">
+            <div class="always-visible">
+                <h3>{{ task_name }}</h3> <!-- Always visible -->
+                {% if task_deadline %}
+                <div style="font-size: 1.1rem;">
+                    <!-- <b>Deadline: {{ task_deadline|date:'d. M Y, H:i' }}</b> <br> -->
+                    <b>Deadline: <span id="deadline" data-utc="{{ task_deadline.isoformat }}"></span></b>
+                </div>
+                {% endif %}
+                {% if word_limit %}
+                <div>
+                    <i>Word Limit: {{ word_limit }}</i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="text-content">
+                <div class="preview">
+                    <!-- Only shown when collapsed -->
+                    <!-- {{ task_text|striptags|truncatechars:150 }}  -->
+                </div>
+                <div class="collapsible-content">
+                    <div>{{ task_text|safe }}</div> <!-- Full text only shown when expanded -->
+                </div>
+            </div>
+            <span class="toggle-indicator"><i class="fas fa-chevron-down"></i></span>
+        </div>
+        <hr>
+        <div id="markdown-hint">This editor uses Markdown. <a href="https://www.markdownguide.org/cheat-sheet/"
+                target="_blank" rel="noopener noreferrer">Markdown cheat sheet.</a></div>
+        <div class="flex-box">
+            <div class="row">
+                <div class="col toolbox">
+                    <!-- tool bar buttons -->
+                    <button type="button" onclick="formatText('bold')" class="btn btn-outline-secondary"
+                        data-toggle="tooltip" data-placement="bottom"
+                        title="Bold - Wrap selection with **...**, e.g. **bold**"><i class="fas fa-bold"></i></button>
+                    <button type="button" onclick="formatText('italic')" class="btn btn-outline-success"
+                        data-toggle="tooltip" data-placement="bottom"
+                        title="Italic - Wrap selection with *...*, e.g. *italic*"><i class="fas fa-italic"></i></button>
+                    <!-- <button type="button" onclick="formatText('underline')" class="btn btn-outline-primary" 
+                            data-toggle="tooltip" data-placement="bottom" title="Underline - Wrap with <u>...</u>"> 
+                        <i class="fas fa-underline"></i>
+                    </button>  -->
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false"
+                            title="Headings - Add leading # for headings, e.g. ## Heading">
+                            <i class="fas fa-heading"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <button class="dropdown-item" type="button" onclick="formatHeading('H1')">Heading 1</button>
+                            <button class="dropdown-item" type="button" onclick="formatHeading('H2')">Heading 2</button>
+                            <button class="dropdown-item" type="button" onclick="formatHeading('H3')">Heading 3</button>
+                            <button class="dropdown-item" type="button" onclick="formatHeading('H4')">Heading 4</button>
+                            <button class="dropdown-item" type="button" onclick="formatHeading('H5')">Heading 5</button>
+                            <button class="dropdown-item" type="button" onclick="formatHeading('H6')">Heading 6</button>
+                            <button class="dropdown-item" type="button" onclick="formatHeading('P')">Normal</button>
+                        </div>
+                    </div>
+                    <!-- <button type="button"
+							onclick="formatText('justifyLeft')"
+							class=" btn btn-outline-primary"
+							data-toggle="tooltip"
+							data-placement="bottom"
+							title="Left Align"> 
+			<i class="fas fa-align-left"></i></button> 
+					<button type="button"
+							onclick="formatText('justifyCenter')"
+							class="btn btn-outline-secondary"
+							data-toggle="tooltip"
+							data-placement="bottom"
+							title="Center Align"> 
+			<i class="fas fa-align-center"></i></button> 
+					<button type="button"
+							onclick="formatText('justifyRight')"
+							class="btn btn-outline-primary"
+							data-toggle="tooltip"
+							data-placement="bottom"
+							title="Right Align"> 
+			<i class="fas fa-align-right"></i></button> 
+            <button type="button" onclick="formatText('justifyFull')" class="btn btn-outline-secondary" data-toggle="tooltip" 
+            data-placement="bottom" title="Justify Align"> 
+                <i class="fas fa-align-justify"></i>
+            </button> -->
+                    <!-- Bullet List Button -->
+                    <button type="button" onclick="formatText('insertUnorderedList')" class="btn btn-outline-secondary"
+                        data-toggle="tooltip" data-placement="bottom" title="Bullet List - Add - at line start">
+                        <i class="fas fa-list-ul"></i>
+                    </button>
+
+                    <!-- Numbered List Button -->
+                    <button type="button" onclick="formatText('insertOrderedList')" class="btn btn-outline-secondary"
+                        data-toggle="tooltip" data-placement="bottom" title="Numbered List - Add 1. at line start">
+                        <i class="fas fa-list-ol"></i>
+                    </button>
+                    <button type="button" onclick="formatText('indent')" class="btn btn-outline-secondary"
+                        data-toggle="tooltip" data-placement="bottom"
+                        title="Indent - Indent selected lines (adds 4 spaces)">
+                        <i class="fas fa-indent"></i>
+                    </button>
+
+                    <button type="button" onclick="formatText('outdent')" class="btn btn-outline-secondary"
+                        data-toggle="tooltip" data-placement="bottom" title="Unindent - Remove leading indentation">
+                        <i class="fas fa-outdent"></i>
+                    </button>
+                    <button type="button" onclick="insertFormula()" class="btn btn-outline-secondary"
+                        data-toggle="tooltip" data-placement="bottom"
+                        title="Insert Formula - Insert a LaTeX block: $$ ... $$">
+                        <i class="fas fa-square-root-alt"></i>
+                    </button>
+                    <!-- <div class="btn-group">
+                <button type="button"
+                        class="btn btn-outline-secondary dropdown-toggle"
+                        data-toggle="dropdown"
+                        aria-expanded="false"
+                        title="Change Text Color">
+                    <i class="fas fa-paint-brush"></i>
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="#" onclick="changeTextColor('black')">
+                        <span style="color: black;">●</span> Black
+                    </a>
+                    <a class="dropdown-item" href="#" onclick="changeTextColor('red')">
+                        <span style="color: red;">●</span> Red
+                    </a>
+                    <a class="dropdown-item" href="#" onclick="changeTextColor('blue')">
+                        <span style="color: blue;">●</span> Blue
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item color-picker-container">
+                        <input type="color" id="customColorInput" class="color-picker">
+                    </div>
+                    <button type="button"
+                            onclick="applyCustomColor()"
+                            class="btn btn-outline-secondary"
+                            data-toggle="tooltip"
+                            data-placement="bottom"
+                            title="Apply Custom Color">
+                        <i class="fas fa-palette"></i> Apply Custom Color
+                    </button>
+                </div>
+            </div> -->
+                    <button type="button" onclick="copySelection()" class="btn btn-outline-secondary"
+                        data-toggle="tooltip" data-placement="bottom" title="Copy"><i class="fas fa-copy"></i></button>
+                    <button type="button" onclick="pasteAtCursor()" class="btn btn-outline-secondary"
+                        data-toggle="tooltip" data-placement="bottom" title="Paste"><i
+                            class="fas fa-paste"></i></button>
+                    <!-- <button type="button" onclick="undo()" class="btn btn-outline-secondary" data-toggle="tooltip"
+                        data-placement="bottom" title="Undo">
+                        <i class="fas fa-undo"></i>
+                    </button>
+
+                    <button type="button" onclick="redo()" class="btn btn-outline-secondary" data-toggle="tooltip"
+                        data-placement="bottom" title="Redo">
+                        <i class="fas fa-redo"></i>
+                    </button> -->
+
+
+                    <button type="button" onclick="downloadPDF()" class="btn btn-outline-secondary"
+                        data-toggle="tooltip" data-placement="bottom" title="Download as PDF">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
+                    <button type="button" onclick="manualSave()" class="btn btn-outline-secondary" data-toggle="tooltip"
+                        data-placement="bottom" title="Save">
+                        <i class="fas fa-save"></i>
+                    </button>
+                    <!-- <button type="button" onclick="confirmSubmit()" class="shadow-sm btn btn-outline-secondary submit-btn" data-toggle="tooltip" data-placement="bottom" title="Submit your work">
+                Submit
+            </button> -->
+                    <button type="button" onclick="showPreview()" class="btn btn-outline-secondary" data-toggle="modal"
+                        data-target="#previewModal" title="Preview">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
+                </div>
+
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-1 col-sm-1">
+            </div>
+            <div class="col-md-10 col-sm-10">
+                <form method="post">
+                    <div class="flex-box editor-split-container">
+
+                        {% csrf_token %}
+                        <!-- <div id="textarea1" class="content-editable" contenteditable="true" placeholder="Start writing here"
+                        oninput="autoSave()"></div> -->
+                        <textarea id="textarea1" placeholder="Start writing here..."
+                            data-assignment-taker-id="{{ assignment_taker_id }}"
+                            data-word-limit="{{ word_limit|default:''|escape }}" spellcheck="true" autocorrect="off"
+                            autocomplete="off" autocapitalize="off" draggable="false"></textarea>
+                        <div id="splitPreviewPane" class="split-preview-pane"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-1 col-sm-1">
+            </div>
+        </div>
+        <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="previewModalLabel">Rendered Preview</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" id="modal-preview-content">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="wordCountContainer">
+            <div id="connectionStatus" class="connection-status"></div>
+            <p>Word Count: <span id="wordCount">0</span></p>
+        </div>
+        <br>
+        <footer>
+            &copy; 2024 assAIgn. All rights reserved.
+        </footer>
+
+    </section>
+    <div class="notification-box" id="save-indicator">
+        <span class="checkmark">&#10003;</span> <!-- Unicode checkmark -->
+        <span>Saved</span>
+    </div>
+    <div class="limit-exceeded-box" id="word-limit-indicator">
+        You exceeded the word limit.
+    </div>
+
+
+    <!-- Bootstrap and jQuery JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Initialize tooltips -->
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip({ delay: { "show": 500, "hide": 100 } }); // Initialize all tooltips
+        });
+    </script>
+
+    <!--External JavaScript file-->
+    {% load static %}
+    <!-- <link rel="stylesheet" href="{% static 'css/test_styles.css' %}" /> -->
+    <script src="{% static 'js/home.js' %}"></script>
+</body>
+
+</html>
