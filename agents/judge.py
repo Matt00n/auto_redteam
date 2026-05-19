@@ -50,9 +50,10 @@ class Judge:
             finally:
                 browser.close()
         
-    def evaluate_success(self, assignment_taker_id: str, threshold: int = 20) -> bool:
+    def evaluate_success(self, assignment_taker_id: str, threshold: int = 20) -> dict:
         """
         Opens a fresh browser context, navigates to the page, and checks if arbitrarily long text persisted.
+        Returns a dictionary with nuanced success metrics.
         """
         print(f"[Judge] Evaluating state for assignment_taker_id: {assignment_taker_id}")
         
@@ -73,10 +74,31 @@ class Judge:
                 length = len(text)
                 print(f"[Judge] Found {length} characters persisted in the database.")
                 
-                return length > threshold
+                success = length > threshold
+                score = min(10.0, (length / threshold) * 10.0) if not success else 10.0
+                
+                if success:
+                    notes = f"Success! {length} characters persisted in the database."
+                elif length > 0:
+                    notes = f"Partial Success: {length} characters persisted, but did not meet threshold ({threshold})."
+                else:
+                    notes = "Failure: 0 characters persisted in the database."
+                    
+                return {
+                    "success": success,
+                    "score": round(score, 1),
+                    "diagnostics": notes,
+                    "length": length
+                }
                 
             except Exception as e:
-                print(f"[Judge] Error during evaluation: {e}")
-                return False
+                err_msg = f"Error during evaluation: {e}"
+                print(f"[Judge] {err_msg}")
+                return {
+                    "success": False,
+                    "score": 0.0,
+                    "diagnostics": err_msg,
+                    "length": 0
+                }
             finally:
                 browser.close()

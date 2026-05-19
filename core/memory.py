@@ -27,17 +27,19 @@ class Historian:
                     outcome_success: bool,
                     outcome_notes: str,
                     evidence: Dict[str, Any] = None,
-                    attempt_id: str = None) -> str:
+                    attempt_id: str = None,
+                    relations: List[str] = None) -> str:
         
         if not attempt_id:
             attempt_id = str(uuid.uuid4())
         
         record = {
             "attempt_id": attempt_id,
-            "timestamp": datetime.now(datetime.timezone.utc).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "family": family,
             "hypothesis": hypothesis,
             "assumptions": assumptions,
+            "relations": relations or [],
             "context_persona": context_persona,
             "execution": {
                 "mode": execution_mode,
@@ -68,3 +70,53 @@ class Historian:
         
         # Return the most recent 'limit' attempts
         return attempts[-limit:]
+
+    def retrieve_portfolio(self) -> Dict[str, Any]:
+        """
+        Returns a curated memory portfolio to prevent local-minimum looping:
+        - summary: counts of explored families and success rates
+        - recent: the 2 most recent attempts
+        - successful: 1 random successful attempt (if any)
+        - diverse: 1 random attempt from a less explored family
+        """
+        attempts = []
+        if os.path.exists(self.memory_file):
+            with open(self.memory_file, "r") as f:
+                for line in f:
+                    if line.strip():
+                        attempts.append(json.loads(line))
+                        
+        if not attempts:
+            return {"summary": "No past attempts.", "recent": [], "successful": [], "diverse": []}
+            
+        # Build summary
+        family_stats = defaultdict(lambda: {"total": 0, "success": 0})
+        successful_attempts = []
+        
+        for a in attempts:
+            fam = a.get("family", "Unknown")
+            family_stats[fam]["total"] += 1
+            if a.get("result", {}).get("success"):
+                family_stats[fam]["success"] += 1
+                successful_attempts.append(a)
+                
+        summary_lines = []
+        for fam, stats in family_stats.items():
+            rate = (stats["success"] / stats["total"]) * 100
+            summary_lines.append(f"Family '{fam}': {stats['total']} attempts, {rate:.0f}% success rate.")
+            
+        recent = attempts[-2:]
+        
+        successful_sample = random.sample(successful_attempts, 1) if successful_attempts else []
+        
+        # Diverse sample: pick from a family that isn't the most recently used
+        recent_family = recent[-1].get("family") if recent else None
+        diverse_candidates = [a for a in attempts if a.get("family") != recent_family]
+        diverse_sample = random.sample(diverse_candidates, 1) if diverse_candidates else []
+        
+        return {
+            "summary": "\n".join(summary_lines),
+            "recent": recent,
+            "successful": successful_sample,
+            "diverse": diverse_sample
+        }

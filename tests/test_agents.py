@@ -24,7 +24,8 @@ def test_mastermind_generation(tmpdir):
     mastermind = Mastermind(llm=mock_llm, historian=historian, persona="white-box")
     
     target_files = {"assignments.html": "<html/>", "home.js": "console.log();"}
-    response = mastermind.generate_hypothesis(target_files)
+    directive = {"persona": "white-box", "strategy": "novel_exploration", "focus_area": "test"}
+    response = mastermind.generate_hypothesis(target_files, directive)
     
     assert "family" in response
     
@@ -40,7 +41,8 @@ def test_mastermind_grey_box(tmpdir):
     mastermind = Mastermind(llm=mock_llm, historian=historian, persona="grey-box")
     
     target_files = {"assignments.html": "<html/>", "home.js": "console.log();", "consumer.py": "def test(): pass"}
-    mastermind.generate_hypothesis(target_files)
+    directive = {"persona": "grey-box", "strategy": "novel_exploration", "focus_area": "test"}
+    mastermind.generate_hypothesis(target_files, directive)
     
     user_prompt = mock_llm.last_messages[1]["content"]
     assert "<html/>" in user_prompt
