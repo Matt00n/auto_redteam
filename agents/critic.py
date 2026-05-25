@@ -29,7 +29,7 @@ class IdeaCritic:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            model="gpt-4o"
+            model="gpt-4o-mini"
         )
         
         try:
@@ -67,7 +67,7 @@ class CodeCritic:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            model="gpt-4o"
+            model="gpt-4o-mini"
         )
         
         try:

@@ -1,0 +1,188 @@
+[
+  {
+    "id": "seed_hijack",
+    "family": "Event Listener Hijacking",
+    "description": "Identify the specific 'paste' or 'keydown' listener and nullify it via the browser console (element.onpaste = null).",
+    "used": false
+  },
+  {
+    "id": "seed_synthetic",
+    "family": "Synthetic Input Emulation",
+    "description": "Instead of 'pasting', use a script to iterate through a string and fire a sequence of keydown, keypress, and keyup events for every single character to simulate hyper-fast human typing.",
+    "used": false
+  },
+  {
+    "id": "seed_shadow",
+    "family": "Shadow DOM Manipulation",
+    "description": "Check if the editor resides within a Shadow Root where standard global event listeners might behave differently.",
+    "used": false
+  },
+  {
+    "id": "seed_fiber",
+    "family": "Data Injection via Console",
+    "description": "Directly modify the internal state of the editor (e.g. if it uses React, access the component's state via the __reactFiber property).",
+    "used": false
+  },
+  {
+    "id": "seed_hid",
+    "family": "Virtual HID Emulation",
+    "description": "Leverage the OpenAI Computer Use API (or pyautogui) to visually analyze the screen and control the mouse/keyboard directly at the OS level to bypass browser restrictions. Ensure execution_mode is set to 'computer_use'.",
+    "used": false
+  },
+  {
+    "id": "seed_extension",
+    "family": "Browser Extension Injection",
+    "description": "Create a temporary browser extension that has higher privileges than the website scripts to force-inject text into fields.",
+    "used": false
+  },
+  {
+    "id": "seed_ocr",
+    "family": "OCR-to-Keyboard",
+    "description": "Display the text on a secondary screen or window, use OCR to 'read' it, and then pipe that data into a keyboard emulator.",
+    "used": false
+  },
+  {
+    "id": "seed_dragdrop",
+    "family": "Drag-and-Drop",
+    "description": "Try dragging a .txt file directly into the editor, which often uses a different event handler (onDrop) than onPaste.",
+    "used": false
+  },
+  {
+    "id": "seed_devtools",
+    "family": "Browser DevTools Override",
+    "description": "Paste code into the 'Local Overrides' section of Chrome DevTools to permanently delete the defense script from the source.",
+    "used": false
+  },
+  {
+    "id": "seed_speed_typist",
+    "family": "The Maximum Legal Speed Typist",
+    "description": "Utilize Playwright or OS-level automation to simulate keypresses at exactly 14 chars/sec (just under the backend's 15/sec refill rate).",
+    "used": false
+  },
+  {
+    "id": "seed_burst_typist",
+    "family": "The Burst Typist",
+    "description": "Type 60 characters instantly (exhausting the token bucket limit in consumer.py), wait 4 seconds, and repeat.",
+    "used": false
+  },
+  {
+    "id": "seed_internal_clipboard",
+    "family": "Internal Clipboard Hijacking",
+    "description": "home.js implements a custom clipboard via GlobalState.internalClipboard. Inject GlobalState.internalClipboard = {text: 'PAYLOAD', ...}; pasteAtCursor(); to bypass UI constraints.",
+    "used": false
+  },
+  {
+    "id": "seed_offline_stuffing",
+    "family": "Offline Queue Stuffing",
+    "description": "Disconnect the network, write directly to GlobalState.offlineQueue or localStorage.setItem('editor_content_{id}', 'PAYLOAD'), and reconnect.",
+    "used": false
+  },
+  {
+    "id": "seed_action_spoofing",
+    "family": "Action Type Spoofing",
+    "description": "Write a pure Python WebSocket script. The backend consumer.py validation ignores length if the action_type is not 'insert'. Send a direct WebSocket message with action_type='paste'.",
+    "used": false
+  },
+  {
+    "id": "seed_race_condition",
+    "family": "Concurrent Connections / Lock Drops",
+    "description": "Rapidly connect and disconnect multiple WebSocket clients simultaneously to attempt a race condition against the Redis lock in consumer.py.",
+    "used": false
+  },
+  {
+    "id": "seed_ime_injection",
+    "family": "IME Composition Injection",
+    "description": "Bypass keydown event guards by initiating input method editor (IME) events. Programmatically dispatch a sequence of 'compositionstart', 'compositionupdate' with intermediate values, and finally 'compositionend' carrying the full committed string payload.",
+    "used": false
+  },
+  {
+    "id": "seed_drag_drop_slice",
+    "family": "Drag-and-Drop HTML Text Slice",
+    "description": "Instead of dropping a text file, simulate a mouse selection drag from an auxiliary HTML div container directly into the active editor textarea. This relies on the browser's native text-drag functionality, raising 'dragover' and 'drop' events rather than standard keydown or paste events.",
+    "used": false
+  },
+  {
+    "id": "seed_clipboard_datatransfer",
+    "family": "DataTransfer Clipboard Object Spoofing",
+    "description": "Create and dispatch a synthetic 'paste' event targeting the editor. Construct a custom DataTransfer object using browser console JS, manually bind the 'text/plain' payload format, and dispatch it to trick frontend event listeners that check event.clipboardData.",
+    "used": false
+  },
+  {
+    "id": "seed_speech_emulation",
+    "family": "Web Speech API Spoofing",
+    "description": "Simulate speech-to-text input by dispatching a synthetic SpeechRecognitionEvent to the browser's Web Speech API hooks, or mock the navigator.mediaDevices.getUserMedia stream to play pre-recorded audio of the text to bypass standard editor input paths.",
+    "used": false
+  },
+  {
+    "id": "seed_execcommand_insert",
+    "family": "Document execCommand Injection",
+    "description": "Focus the textarea editor and execute document.execCommand('insertText', false, chunk) character by character or in small chunks. This inserts text via native editing commands, bypassing typical keyboard and clipboard listeners on the textarea.",
+    "used": false
+  },
+  {
+    "id": "seed_micro_timing",
+    "family": "Micro-timed Input Automation",
+    "description": "Automate input typing with a Playwright script that feeds keys into the editor at micro-intervals (e.g. exactly 68ms delay between characters). This maximizes typing speed to finish the task as fast as possible without tripping the token-bucket rate limit in consumer.py.",
+    "used": false
+  },
+  {
+    "id": "seed_autofill",
+    "family": "Browser Autofill Exploitation",
+    "description": "Alter the editor textarea attributes to mimic standard login/form fields (e.g., name='email', autocomplete='email'). Then, trigger browser-level autocomplete or password manager fill using Playwright, which relies on native browser values update paths and bypasses user event filters.",
+    "used": false
+  },
+  {
+    "id": "seed_dead_keys",
+    "family": "Dead Key Event Sequencing",
+    "description": "Simulate input using sequences of Dead Keys (accent combinations). Dispatch keydown events with key='Dead' followed by the base character. This bypasses keyboard event listeners targeting simple ASCII inputs by constructing characters through composition steps.",
+    "used": false
+  },
+  {
+    "id": "seed_middle_click_paste",
+    "family": "X11 Selection Paste Emulation",
+    "description": "Simulate a mouse middle-click (button=1) event over the editor text area while a text selection exists. In Linux/Unix browser contexts, this fires selection paste events which may bypass traditional preventDefault handlers tied strictly to Ctrl+V / Command+V paste listeners.",
+    "used": false
+  },
+  {
+    "id": "seed_service_worker_poison",
+    "family": "Service Worker Offline Cache Poisoning",
+    "description": "Inject a temporary Service Worker via the developer console. Configure it to intercept WebSocket connections or API sync requests, poisoning the outgoing payload to contain the full pre-composed answer text before synchronization completes.",
+    "used": false
+  },
+  {
+    "id": "seed_binding_hijack",
+    "family": "Framework Data-Binding Injection",
+    "description": "Inject a script that intercepts framework-level properties (such as locating React state setters or setting HTMLTextAreaElement.prototype.value). Overwrite the value property and dispatch a simulated 'input' event with isTrusted=true proxy settings to force editor update.",
+    "used": false
+  },
+  {
+    "id": "seed_double_byte_accent",
+    "family": "Accent Homoglyph & Backspace Cleanup",
+    "description": "Input letters using double-byte accent marks, homoglyphs, or invisible Unicode zero-width spaces that evade basic input volume/pasting rules. Follow this with automated backspaces to strip the modifier marks, leaving only the desired text.",
+    "used": false
+  },
+  {
+    "id": "seed_selection_insertnode",
+    "family": "Selection Range API Injection",
+    "description": "Select the caret position inside the editor using window.getSelection(). Create a Text node with the target text payload, construct a Range object at the selection point, and call range.insertNode(textNode) to write directly into the DOM tree structure.",
+    "used": false
+  },
+  {
+    "id": "seed_contenteditable_fallback",
+    "family": "Content-Editable Styling Fallback",
+    "description": "Locate and toggle element visibility properties or inject CSS rules that force-enable alternative contenteditable wrappers inside the editor DOM tree. Paste text into these secondary elements where standard textarea paste-guards are not active.",
+    "used": false
+  },
+  {
+    "id": "seed_event_loop_race",
+    "family": "Event Loop Microtask Racing",
+    "description": "Schedule input actions inside high-frequency requestAnimationFrame callbacks or Promise microtask queues (Promise.resolve().then). Race characters into the input queue faster than the main UI thread's event listeners can resolve call-stack block actions.",
+    "used": false
+  },
+  {
+    "id": "seed_history_undo_redo",
+    "family": "Undo/Redo History Manipulation",
+    "description": "Manipulate the browser/editor's internal transaction history. programmatically perform single-character edits to populate the transaction history stack, alter the internal history log state values, and then trigger document.execCommand('undo') or 'redo' to apply bulk edits.",
+    "used": false
+  }
+]

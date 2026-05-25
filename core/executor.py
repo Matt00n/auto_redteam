@@ -1,4 +1,6 @@
 import os
+import sys
+import ast
 import subprocess
 import tempfile
 import time
@@ -14,9 +16,49 @@ class Executor:
         if not os.path.exists(self.sandbox_dir):
             os.makedirs(self.sandbox_dir)
 
+    def verify_safety(self, code: str) -> Tuple[bool, str]:
+        """
+        Statically parses the generated code using AST to verify it contains no dangerous imports,
+        built-ins, or method/attribute calls.
+        """
+        try:
+            tree = ast.parse(code)
+        except SyntaxError as e:
+            return False, f"Python syntax error during safety check: {e}"
+
+        dangerous_modules = {"subprocess", "shutil", "socket", "pty", "ftplib", "smtplib"}
+        dangerous_builtins = {"eval", "exec", "__import__", "compile"}
+        dangerous_attributes = {"system", "popen", "spawn", "fork", "kill", "rmtree", "rmdir"}
+
+        for node in ast.walk(tree):
+            # 1. Check for forbidden module imports
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    module_base = alias.name.split('.')[0]
+                    if module_base in dangerous_modules:
+                        return False, f"Blocked import of dangerous module: {alias.name}"
+            
+            if isinstance(node, ast.ImportFrom):
+                if node.module:
+                    module_base = node.module.split('.')[0]
+                    if module_base in dangerous_modules:
+                        return False, f"Blocked import from dangerous module: {node.module}"
+
+            # 2. Check for blocked built-in functions
+            if isinstance(node, ast.Name):
+                if node.id in dangerous_builtins:
+                    return False, f"Blocked dangerous built-in: {node.id}"
+
+            # 3. Check for dangerous attributes / method names (e.g. os.system, shutil.rmtree)
+            if isinstance(node, ast.Attribute):
+                if node.attr in dangerous_attributes:
+                    return False, f"Blocked call to dangerous attribute/method: {node.attr}"
+
+        return True, "Safe"
+
     def execute_python_code(self, code: str, run_id: str, timeout_seconds: int = 30) -> Dict[str, Any]:
         """
-        Writes the code to a temporary file and executes it via subprocess.
+        Verifies safety first, then writes code to a temporary file and executes it via subprocess.
         Returns a dictionary containing the execution trace.
         """
         # Create a unique filename and artifact directory for this execution
@@ -27,10 +69,6 @@ class Executor:
         if not os.path.exists(artifact_dir):
             os.makedirs(artifact_dir)
 
-        # Write the code to the sandbox
-        with open(filepath, "w") as f:
-            f.write(code)
-
         evidence = {
             "execution_file": filepath,
             "artifact_dir": artifact_dir,
@@ -38,8 +76,21 @@ class Executor:
             "stderr": "",
             "return_code": None,
             "timeout_triggered": False,
-            "execution_time_ms": 0
+            "execution_time_ms": 0,
+            "latency_seconds": 0.0
         }
+
+        # Statically verify safety of the code
+        is_safe, safety_msg = self.verify_safety(code)
+        if not is_safe:
+            print(f"[Executor] [SAFETY BLOCK] {safety_msg}")
+            evidence["return_code"] = 1
+            evidence["stderr"] = f"Safety Harness Blocked Execution: {safety_msg}"
+            return evidence
+
+        # Write the code to the sandbox
+        with open(filepath, "w") as f:
+            f.write(code)
 
         # Setup environment variables for the payload script
         env = os.environ.copy()
@@ -48,32 +99,36 @@ class Executor:
 
         start_time = time.time()
         try:
-            # Run the script. In a real red-team scenario, you might use a Docker container 
-            # or a stricter sandbox. Here we just use subprocess for local testing.
-            process = subprocess.run(
-                ["python", filepath],
-                capture_output=True,
-                text=True,
+            result = subprocess.run(
+                [sys.executable, filepath],
+                cwd=self.sandbox_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 timeout=timeout_seconds,
+                text=True,
                 env=env
             )
-            
-            evidence["stdout"] = process.stdout
-            evidence["stderr"] = process.stderr
-            evidence["return_code"] = process.returncode
+            evidence["stdout"] = result.stdout
+            evidence["stderr"] = result.stderr
+            evidence["return_code"] = result.returncode
             
         except subprocess.TimeoutExpired as e:
-            evidence["stdout"] = e.stdout.decode('utf-8') if e.stdout else ""
-            evidence["stderr"] = e.stderr.decode('utf-8') if e.stderr else ""
+            evidence["stdout"] = e.stdout.decode() if e.stdout else ""
+            evidence["stderr"] = e.stderr.decode() if e.stderr else ""
+            evidence["return_code"] = 1
             evidence["timeout_triggered"] = True
-            evidence["return_code"] = -1
+            
         except Exception as e:
             evidence["stderr"] = str(e)
-            evidence["return_code"] = -2
+            evidence["return_code"] = 1
             
-        end_time = time.time()
-        evidence["execution_time_ms"] = int((end_time - start_time) * 1000)
-        
+        finally:
+            latency = time.time() - start_time
+            evidence["latency_seconds"] = round(latency, 2)
+            # Check if artifact directory was populated
+            if os.path.exists(artifact_dir) and os.listdir(artifact_dir):
+                evidence["artifact_dir"] = artifact_dir
+                
         return evidence
 
     def clean_sandbox(self):

@@ -7,6 +7,7 @@
 - https://github.com/karpathy/autoresearch
 - https://github.com/sakanaai/ai-scientist
 - coscientist
+- alphacode
 - learning from past success is fine but only if the new attack do not abuse the exact same vulnerability
 
 
