@@ -1,11 +1,14 @@
 from core.llm import LLMProvider
 
+
 class Hacker:
     """
     Translates a Mastermind hypothesis into executable code (Playwright, Python WS client, or Computer Use).
     """
-    def __init__(self, llm: LLMProvider):
+
+    def __init__(self, llm: LLMProvider, model: str = "gpt-5-nano-2025-08-07"):
         self.llm = llm
+        self.model = model
 
     def _extract_code(self, content: str) -> str:
         if "```python" in content:
@@ -15,7 +18,13 @@ class Hacker:
         else:
             return content.strip()
 
-    def write_exploit_script(self, hypothesis_json: str, target_url: str = "http://127.0.0.1:8000/assignments/test-123/", feedback: str = None, browser_choice: str = "chromium") -> str:
+    def write_exploit_script(
+        self,
+        hypothesis_json: str,
+        target_url: str = "http://127.0.0.1:8000/assignments/test-123/",
+        feedback: str = None,
+        browser_choice: str = "chromium",
+    ) -> str:
         """
         Translates a hypothesis into executable Python or Playwright code.
         If feedback is provided, acts as a revision step.
@@ -25,17 +34,18 @@ class Hacker:
 
         import json
         import os
+
         try:
             hypothesis_dict = json.loads(hypothesis_json)
             execution_mode = hypothesis_dict.get("execution_mode", "automated")
-        except:
+        except Exception:
             execution_mode = "automated"
 
         system_prompt = (
             "You are the Hacker. Your job is to translate red-team attack hypotheses into executable Python code.\n"
             "Output ONLY the Python code, surrounded by ```python ... ```.\n"
         )
-        
+
         if execution_mode == "direct_websocket":
             system_prompt += (
                 "You MUST output a script that connects directly to the Django Channels WebSocket endpoint using the `websockets` library.\n"
@@ -112,7 +122,7 @@ class Hacker:
                 "import traceback\n"
                 "from playwright.sync_api import sync_playwright\n\n"
                 "def robust_locator(page, selectors):\n"
-                "    \"\"\"Tries multiple selector fallbacks to find and return a visible locator.\"\"\"\n"
+                '    """Tries multiple selector fallbacks to find and return a visible locator."""\n'
                 "    for s in selectors:\n"
                 "        loc = page.locator(s)\n"
                 "        try:\n"
@@ -173,7 +183,9 @@ class Hacker:
                 "  - How to avoid contaminating the result (e.g. clear clipboard, disable extensions)\n\n"
             )
         elif execution_mode == "computer_use":
-            docs_path = os.path.join(os.path.dirname(__file__), "..", "prompts", "computer_use_api.md")
+            docs_path = os.path.join(
+                os.path.dirname(__file__), "..", "prompts", "computer_use_api.md"
+            )
             docs_content = ""
             if os.path.exists(docs_path):
                 with open(docs_path, "r") as f:
@@ -182,7 +194,7 @@ class Hacker:
                 "You MUST write a Python script that utilizes OS-level automation libraries like `pyautogui` or `pynput`, or interact with a Computer Use LLM API to control the mouse and keyboard directly.\n\n"
                 f"API REFERENCE / EXAMPLES:\n{docs_content}\n"
             )
-        
+
         user_prompt = f"Target Hypothesis:\n{hypothesis_json}\n\n"
         if feedback:
             user_prompt += f"CRITIC FEEDBACK (YOUR PREVIOUS SCRIPT WAS REJECTED):\n{feedback}\n\nPlease provide a corrected script.\n"
@@ -192,9 +204,9 @@ class Hacker:
         response = self.llm.generate(
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": user_prompt},
             ],
-            model="gpt-4o"
+            model=self.model,
         )
-        
+
         return self._extract_code(response.content)

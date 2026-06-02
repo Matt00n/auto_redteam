@@ -1,13 +1,12 @@
 import os
-import json
-import time
 import random
-from typing import List, Dict, Any, Optional
+import time
+from typing import Any, Dict, List, Optional
 
 # Attempt to import SDKs (graceful fallback if not installed)
 try:
-    from openai import OpenAI
     import openai
+    from openai import OpenAI
 except ImportError:
     OpenAI = None
     openai = None
@@ -17,7 +16,14 @@ except ImportError:
 
 class LLMProvider:
     """Abstract base class for LLM interactions."""
-    def generate(self, messages: List[Dict[str, str]], model: str, temperature: float = 0.7, tools: Optional[List[Dict[str, Any]]] = None) -> Any:
+
+    def generate(
+        self,
+        messages: List[Dict[str, str]],
+        model: str,
+        temperature: float = 0.7,
+        tools: Optional[List[Dict[str, Any]]] = None,
+    ) -> Any:
         raise NotImplementedError
 
 
@@ -28,7 +34,13 @@ class OpenAIProvider(LLMProvider):
         # Ensure OPENAI_API_KEY is set in environment
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-    def generate(self, messages: List[Dict[str, str]], model: str = "gpt-4o", temperature: float = 0.7, tools: Optional[List[Dict[str, Any]]] = None) -> Any:
+    def generate(
+        self,
+        messages: List[Dict[str, str]],
+        model: str = "gpt-5-nano-2025-08-07",
+        temperature: float = 0.7,
+        tools: Optional[List[Dict[str, Any]]] = None,
+    ) -> Any:
         """
         messages: List of dicts, e.g. [{"role": "system", "content": "..."}, {"role": "user", "content": "..."}]
         tools: Optional tools array for function calling or computer use.
@@ -37,14 +49,14 @@ class OpenAIProvider(LLMProvider):
         kwargs = {
             "model": model,
             "messages": messages,
-            "temperature": temperature,
+            # "temperature": temperature,
         }
         if tools:
             kwargs["tools"] = tools
 
         max_retries = 5
         base_delay = 2.0
-        
+
         for attempt in range(max_retries):
             try:
                 response = self.client.chat.completions.create(**kwargs)
@@ -53,22 +65,38 @@ class OpenAIProvider(LLMProvider):
                 # Catch typical API errors (rate limits, timeouts, service outages)
                 is_transient = False
                 err_msg = str(e)
-                
+
                 # Check for standard rate limits or server errors
-                if openai and isinstance(e, (openai.RateLimitError, openai.APIConnectionError, openai.InternalServerError)):
+                if openai and isinstance(
+                    e,
+                    (
+                        openai.RateLimitError,
+                        openai.APIConnectionError,
+                        openai.InternalServerError,
+                    ),
+                ):
                     is_transient = True
-                elif "rate limit" in err_msg.lower() or "timeout" in err_msg.lower() or "502" in err_msg or "503" in err_msg or "500" in err_msg:
+                elif (
+                    "rate limit" in err_msg.lower()
+                    or "timeout" in err_msg.lower()
+                    or "502" in err_msg
+                    or "503" in err_msg
+                    or "500" in err_msg
+                ):
                     is_transient = True
-                
+
                 if is_transient and attempt < max_retries - 1:
                     # Exponential backoff with jitter: base_delay * 2^attempt + dynamic variance
-                    delay = (base_delay * (2 ** attempt)) + random.uniform(0.5, 1.5)
-                    print(f"[LLM Retry] Transient error encountered (Attempt {attempt+1}/{max_retries}): {e}. Retrying in {delay:.2f} seconds...")
+                    delay = (base_delay * (2**attempt)) + random.uniform(0.5, 1.5)
+                    print(
+                        f"[LLM Retry] Transient error encountered (Attempt {attempt + 1}/{max_retries}): {e}. Retrying in {delay:.2f} seconds..."
+                    )
                     time.sleep(delay)
                 else:
-                    print(f"[LLM Error] Non-recoverable or terminal API error on attempt {attempt+1}: {e}")
+                    print(
+                        f"[LLM Error] Non-recoverable or terminal API error on attempt {attempt + 1}: {e}"
+                    )
                     raise e
-
 
 
 class GeminiProvider(LLMProvider):
@@ -76,11 +104,19 @@ class GeminiProvider(LLMProvider):
         # Setup Gemini API key
         pass
 
-    def generate(self, messages: List[Dict[str, str]], model: str = "gemini-1.5-pro", temperature: float = 0.7, tools: Optional[List[Dict[str, Any]]] = None) -> Any:
+    def generate(
+        self,
+        messages: List[Dict[str, str]],
+        model: str = "gemini-1.5-pro",
+        temperature: float = 0.7,
+        tools: Optional[List[Dict[str, Any]]] = None,
+    ) -> Any:
         """
         Translates OpenAI style messages to Gemini format and calls the API.
         """
-        raise NotImplementedError("Gemini provider not yet implemented. Please use OpenAIProvider.")
+        raise NotImplementedError(
+            "Gemini provider not yet implemented. Please use OpenAIProvider."
+        )
 
 
 def get_llm(provider_name: str = "openai") -> LLMProvider:

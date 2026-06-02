@@ -142,3 +142,23 @@ def test_mastermind_negative_constraints(tmpdir):
     assert "WebSocket Spoofing" in sys_content
 
 
+def test_planner_random_mode(tmpdir):
+    from core.memory import Historian
+    from agents.planner import Planner
+    log_dir = str(tmpdir.mkdir("logs"))
+    historian = Historian(log_dir=log_dir)
+    
+    # We do not mock LLM because we expect it to be bypassed entirely in random mode
+    planner = Planner(llm=None, historian=historian)
+    
+    directive = planner.generate_directive(taxonomy_mode="random")
+    
+    assert directive is not None
+    assert directive["persona"] in ["white-box", "grey-box", "black-box"]
+    assert directive["strategy"] in ["novel_exploration", "evolution", "recombination"]
+    assert directive["target_browser"] in ["chromium", "firefox", "webkit"]
+    assert directive["focus_area"] in planner.taxonomy_list
+    assert "LLM token budget" in directive["reasoning"]
+
+
+

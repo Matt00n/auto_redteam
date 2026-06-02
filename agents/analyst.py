@@ -1,11 +1,14 @@
 from core.llm import LLMProvider
 
+
 class Analyst:
     """
     Reads the raw source code and distills it into a dense Mechanism Map.
     """
-    def __init__(self, llm: LLMProvider):
+
+    def __init__(self, llm: LLMProvider, model: str = "gpt-5-nano-2025-08-07"):
         self.llm = llm
+        self.model = model
 
     def generate_mechanism_map(self, target_files: dict) -> str:
         system_prompt = (
@@ -29,9 +32,9 @@ class Analyst:
         response = self.llm.generate(
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": user_prompt},
             ],
-            model="gpt-4o-mini"
+            model=self.model,
         )
-        
+
         return response.content
