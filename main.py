@@ -11,6 +11,8 @@ from core.executor import Executor
 from core.llm import get_llm
 from core.memory import Historian
 
+ITERATIONS = 3
+
 
 def main():
     print("Starting Auto-RedTeam Evolutionary Loop...")
@@ -59,8 +61,7 @@ def main():
 
     human_tasks_queue = []
 
-    iterations = 5
-    for i in range(iterations):
+    for i in range(ITERATIONS):
         print(f"\n--- Iteration {i + 1} ---")
 
         from agents.planner import Planner
@@ -354,7 +355,7 @@ def main():
 
         # Process human handoff queue if full or at the end
         if len(human_tasks_queue) >= 3 or (
-            i == iterations - 1 and len(human_tasks_queue) > 0
+            i == ITERATIONS - 1 and len(human_tasks_queue) > 0
         ):
             print(
                 f"\n{'=' * 50}\n[HUMAN HANDOFF] {len(human_tasks_queue)} tasks require manual execution!\n{'=' * 50}"
