@@ -4,7 +4,7 @@ from core.llm import LLMProvider
 
 
 class IdeaCritic:
-    def __init__(self, llm: LLMProvider, model: str = "gpt-5-nano-2025-08-07"):
+    def __init__(self, llm: LLMProvider, model: str = "gemma-heretic"):
         self.llm = llm
         self.model = model
 
@@ -49,7 +49,7 @@ class CodeCritic:
     def __init__(
         self,
         llm: LLMProvider,
-        model: str = "gpt-5-nano-2025-08-07",
+        model: str = "gemma-heretic",
         editor_id: str = "textarea1",
         required_chars: int = 200,
     ):

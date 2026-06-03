@@ -6,7 +6,7 @@ class Hacker:
     Translates a Mastermind hypothesis into executable code (Playwright, Python WS client, or Computer Use).
     """
 
-    def __init__(self, llm: LLMProvider, model: str = "gpt-5-nano-2025-08-07"):
+    def __init__(self, llm: LLMProvider, model: str = "gemma-heretic7"):
         self.llm = llm
         self.model = model
 

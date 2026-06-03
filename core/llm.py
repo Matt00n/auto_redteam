@@ -32,12 +32,16 @@ class OpenAIProvider(LLMProvider):
         if not OpenAI:
             raise ImportError("OpenAI SDK not installed. Run `pip install openai`")
         # Ensure OPENAI_API_KEY is set in environment
-        self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        self.client = OpenAI(
+            base_url="http://localhost:11434/v1/",
+            api_key="ollama",
+            # api_key=os.environ.get("OPENAI_API_KEY")
+        )
 
     def generate(
         self,
         messages: List[Dict[str, str]],
-        model: str = "gpt-5-nano-2025-08-07",
+        model: str = "gemma-heretic",
         temperature: float = 0.7,
         tools: Optional[List[Dict[str, Any]]] = None,
     ) -> Any:

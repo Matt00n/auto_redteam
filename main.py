@@ -11,7 +11,8 @@ from core.executor import Executor
 from core.llm import get_llm
 from core.memory import Historian
 
-ITERATIONS = 3
+ITERATIONS = 1
+LOCAL = True
 
 
 def main():
@@ -404,7 +405,7 @@ def main():
 
 
 if __name__ == "__main__":
-    if not os.environ.get("OPENAI_API_KEY"):
+    if not os.environ.get("OPENAI_API_KEY") or LOCAL:
         print("Please set the OPENAI_API_KEY environment variable.")
     else:
         main()

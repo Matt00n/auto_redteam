@@ -15,7 +15,7 @@ class Planner:
         self,
         llm: LLMProvider,
         historian: Historian,
-        model: str = "gpt-5-nano-2025-08-07",
+        model: str = "gemma-heretic7",
     ):
         self.llm = llm
         self.model = model
