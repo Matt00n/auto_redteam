@@ -1,0 +1,6 @@
+ERROR: require is not defined
+CONSOLE: Connecting to WS: ws://localhost:8000/ws/assignments/0de7199b-80ba-4686-839b-aacff2025cc5/
+CONSOLE: WebSocket connected.
+ERROR: require is not defined
+CONSOLE: Connecting to WS: ws://localhost:8000/ws/assignments/0de7199b-80ba-4686-839b-aacff2025cc5/
+CONSOLE: WebSocket connected.

@@ -10,8 +10,9 @@ from agents.mastermind import Mastermind
 from core.executor import Executor
 from core.llm import get_llm
 from core.memory import Historian
+from core.utils import parse_robust_json
 
-ITERATIONS = 1
+ITERATIONS = 2
 LOCAL = True
 
 
@@ -182,13 +183,16 @@ def main():
 
         # Parse hypothesis json
         try:
-            hypothesis_data = json.loads(hypothesis_raw)
+            hypothesis_data = parse_robust_json(hypothesis_raw)
             family = hypothesis_data.get("family", "Unknown")
             hypothesis_desc = hypothesis_data.get("hypothesis", hypothesis_raw)
             execution_mode = hypothesis_data.get("execution_mode", "automated")
             assumptions = hypothesis_data.get("assumptions", [])
             relations = hypothesis_data.get("relations", [])
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, ValueError):
+            print(
+                f"\tError trying to extract JSON from hypothesis data: {hypothesis_raw}"
+            )
             family = "Unknown/ParseError"
             hypothesis_desc = hypothesis_raw
             execution_mode = "automated"
@@ -405,7 +409,7 @@ def main():
 
 
 if __name__ == "__main__":
-    if not os.environ.get("OPENAI_API_KEY") or LOCAL:
+    if not os.environ.get("OPENAI_API_KEY") and not LOCAL:
         print("Please set the OPENAI_API_KEY environment variable.")
     else:
         main()

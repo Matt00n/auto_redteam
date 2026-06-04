@@ -127,7 +127,7 @@ class Executor:
         start_time = time.time()
         try:
             result = subprocess.run(
-                [sys.executable, filepath],
+                [sys.executable, filename],
                 cwd=self.sandbox_dir,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -140,10 +140,14 @@ class Executor:
             evidence["return_code"] = result.returncode
 
         except subprocess.TimeoutExpired as e:
-            evidence["stdout"] = e.stdout.decode() if e.stdout else ""
-            evidence["stderr"] = e.stderr.decode() if e.stderr else ""
+            # evidence["stdout"] = e.stdout.decode() if e.stdout else ""
+            # evidence["stderr"] = e.stderr.decode() if e.stderr else ""
+            evidence["stdout"] = e.stdout if e.stdout else ""
+            evidence["stderr"] = e.stderr if e.stderr else ""
             evidence["return_code"] = 1
             evidence["timeout_triggered"] = True
+            evidence["stdout"] = e.stdout.decode() if e.stdout else ""
+            evidence["stderr"] = e.stderr.decode() if e.stderr else ""
 
         except Exception as e:
             evidence["stderr"] = str(e)

@@ -3,6 +3,7 @@ import random
 
 from core.llm import LLMProvider
 from core.memory import Historian
+from core.utils import parse_robust_json
 
 
 class Planner:
@@ -15,7 +16,7 @@ class Planner:
         self,
         llm: LLMProvider,
         historian: Historian,
-        model: str = "gemma-heretic7",
+        model: str = "gemma-heretic",
     ):
         self.llm = llm
         self.model = model
@@ -141,13 +142,14 @@ class Planner:
         try:
             # We assume LLM Provider returns raw string or we extract json
             content = response.content
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            elif "```" in content:
-                content = content.split("```")[1].split("```")[0].strip()
-
-            return json.loads(content)
+            return parse_robust_json(content)
         except Exception:
+            try:
+                print(
+                    f"\tError trying to extract JSON from Planner response: {response.content}"
+                )
+            except Exception:
+                pass
             return {
                 "persona": "white-box",
                 "strategy": "novel_exploration",

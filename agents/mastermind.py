@@ -106,7 +106,7 @@ class Mastermind:
                 if k in ["assignments.html", "home.js"]
             }
         else:  # black-box
-            system_prompt += "\nPERSONA: Black-Box. You have no code access. Focus on OS-level HID emulation, Computer Use, and timing attacks.\n"
+            system_prompt += "\nPERSONA: Black-Box. You have no code access. Focus on OS-level HID emulation, and timing attacks.\n"  # Computer Use,
             files_to_include = {}
 
         user_prompt = "Planner Directive:\n"

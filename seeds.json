@@ -15,7 +15,7 @@
     "id": "seed_shadow",
     "family": "Shadow DOM Manipulation",
     "description": "Check if the editor resides within a Shadow Root where standard global event listeners might behave differently.",
-    "used": false
+    "used": true
   },
   {
     "id": "seed_fiber",
@@ -33,7 +33,7 @@
     "id": "seed_extension",
     "family": "Browser Extension Injection",
     "description": "Create a temporary browser extension that has higher privileges than the website scripts to force-inject text into fields.",
-    "used": false
+    "used": true
   },
   {
     "id": "seed_ocr",
@@ -141,7 +141,7 @@
     "id": "seed_middle_click_paste",
     "family": "X11 Selection Paste Emulation",
     "description": "Simulate a mouse middle-click (button=1) event over the editor text area while a text selection exists. In Linux/Unix browser contexts, this fires selection paste events which may bypass traditional preventDefault handlers tied strictly to Ctrl+V / Command+V paste listeners.",
-    "used": false
+    "used": true
   },
   {
     "id": "seed_service_worker_poison",

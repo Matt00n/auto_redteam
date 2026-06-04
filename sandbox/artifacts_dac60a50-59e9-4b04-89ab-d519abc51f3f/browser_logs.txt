@@ -1,0 +1,24 @@
+ERROR: require is not defined
+CONSOLE: Connecting to WS: ws://localhost:8000/ws/assignments/0de7199b-80ba-4686-839b-aacff2025cc5/
+CONSOLE: WebSocket connection to 'ws://localhost:8000/ws/assignments/0de7199b-80ba-4686-839b-aacff2025cc5/' failed: Error during WebSocket handshake: Unexpected response code: 403
+CONSOLE: WebSocket error: Event
+CONSOLE: WebSocket closed. 1006 
+CONSOLE: Scheduling reconnect in 2s (Attempt 1)...
+ERROR: require is not defined
+CONSOLE: Connecting to WS: ws://localhost:8000/ws/assignments/0de7199b-80ba-4686-839b-aacff2025cc5/
+CONSOLE: WebSocket connection to 'ws://localhost:8000/ws/assignments/0de7199b-80ba-4686-839b-aacff2025cc5/' failed: Error during WebSocket handshake: Unexpected response code: 403
+CONSOLE: WebSocket error: Event
+CONSOLE: WebSocket closed. 1006 
+CONSOLE: Scheduling reconnect in 2s (Attempt 1)...
+CONSOLE: Connecting to WS: ws://localhost:8000/ws/assignments/0de7199b-80ba-4686-839b-aacff2025cc5/
+CONSOLE: WebSocket connection to 'ws://localhost:8000/ws/assignments/0de7199b-80ba-4686-839b-aacff2025cc5/' failed: Error during WebSocket handshake: Unexpected response code: 403
+CONSOLE: WebSocket error: Event
+CONSOLE: WebSocket closed. 1006 
+CONSOLE: Scheduling reconnect in 4s (Attempt 2)...
+CONSOLE: Connecting to WS: ws://localhost:8000/ws/assignments/0de7199b-80ba-4686-839b-aacff2025cc5/
+CONSOLE: WebSocket connection to 'ws://localhost:8000/ws/assignments/0de7199b-80ba-4686-839b-aacff2025cc5/' failed: Error during WebSocket handshake: Unexpected response code: 403
+CONSOLE: WebSocket error: Event
+CONSOLE: WebSocket closed. 1006 
+CONSOLE: Scheduling reconnect in 8s (Attempt 3)...
+CONSOLE: Connecting to WS: ws://localhost:8000/ws/assignments/0de7199b-80ba-4686-839b-aacff2025cc5/
+CONSOLE: WebSocket connected.

@@ -1,6 +1,7 @@
 import json
 
 from core.llm import LLMProvider
+from core.utils import parse_robust_json
 
 
 class IdeaCritic:
@@ -36,8 +37,9 @@ class IdeaCritic:
         )
 
         try:
-            return json.loads(response.content)
-        except json.JSONDecodeError:
+            return parse_robust_json(response.content)
+        except (json.JSONDecodeError, ValueError):
+            print(f"\tError extracting JSON from LLM response: {response.content}")
             # Fallback
             return {
                 "approved": True,
@@ -88,8 +90,9 @@ class CodeCritic:
         )
 
         try:
-            return json.loads(response.content)
-        except json.JSONDecodeError:
+            return parse_robust_json(response.content)
+        except (json.JSONDecodeError, ValueError):
+            print(f"\tError extracting JSON from LLM response: {response.content}")
             return {
                 "approved": True,
                 "feedback": "Parse error, defaulting to approved.",
