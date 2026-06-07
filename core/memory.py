@@ -20,6 +20,10 @@ class Historian:
 
     def log_attempt(
         self,
+        directive_strategy: str,
+        directive_target_browser: str,
+        directive_focus_area: str,
+        directive_reasoning: str,
         family: str,
         hypothesis: str,
         assumptions: List[str],
@@ -40,6 +44,12 @@ class Historian:
         record = {
             "attempt_id": attempt_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            "directive": {
+                "strategy": directive_strategy,
+                "target_browser": directive_target_browser,
+                "focus_area": directive_focus_area,
+                "reasoning": directive_reasoning,
+            },
             "family": family,
             "hypothesis": hypothesis,
             "assumptions": assumptions,
@@ -112,7 +122,10 @@ class Historian:
 
         # Weighted sampling
         sampled_attempts = []
-        weights = [a.get("result", {}).get("score", 0.0) + 0.05 for a in attempts]
+        weights = [
+            min(a.get("result", {}).get("score", 0.0), 200) / 200 + 0.5
+            for a in attempts
+        ]
         total = sum(weights)
         probs = [w / total for w in weights]
 
@@ -123,10 +136,32 @@ class Historian:
                 sampled_indices.append(idx)
         sampled_attempts = [attempts[i] for i in sampled_indices]
 
+        sampled_attempts_str = ""
+        for a in sampled_attempts:
+            sampled_attempts_str += (
+                f"\n\n--- Attempt {a['attempt_id']} ---\nfamily: {a['family']}\n"
+            )
+            sampled_attempts_str += f"hypothesis: {a['hypothesis']}\n"
+            sampled_attempts_str += (
+                f"context: {a['context_persona']}\nmode: {a['execution']['mode']}\n"
+            )
+            # NOTE: below breaks local LLM
+            # sampled_attempts_str += (
+            #     f"= CODE START =\n{a['execution']['code']}\n= CODE END =\n"
+            # )
+            sampled_attempts_str += f"success: {str(a['result']['success'])}\nscore: {str(a['result']['score'])}\n"
+            sampled_attempts_str += f"browser evidence: {a['result']['notes']}\n"
+            sampled_attempts_str += f"{'stdout: ' + a['evidence']['stdout'] + '\n' if 'stdout' in a['evidence'] else ''}"
+            sampled_attempts_str += f"{'stderr: ' + a['evidence']['stderr'] + '\n' if 'stderr' in a['evidence'] else ''}"
+            sampled_attempts_str += f"{'return code: ' + str(a['evidence']['return_code']) + '\n' if 'return_code' in a['evidence'] else ''}"
+            sampled_attempts_str += f"{'timeout triggered: ' + str(a['evidence']['timeout_triggered']) + '\n' if 'timeout_triggered' in a['evidence'] else ''}"
+            sampled_attempts_str += f"{'execution time in ms: ' + str(a['evidence']['execution_time_ms']) + '\n' if 'execution_time_ms' in a['evidence'] else ''}"
+            sampled_attempts_str += f"{'latency in seconds: ' + str(a['evidence']['latency_seconds']) + '\n' if 'latency_seconds' in a['evidence'] else ''}"
+
         return {
             "summary": "\n".join(summary_lines),
-            "recent": attempts[-1:] if attempts else [],
-            "sampled": sampled_attempts,
+            # "recent": attempts[-1:] if attempts else [],
+            "sampled": sampled_attempts_str,
         }
 
     def sample_parent_for_mutation(self) -> Any:

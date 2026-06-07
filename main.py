@@ -3,10 +3,12 @@ import os
 import random
 import uuid
 
+from agents.analyst import Analyst
 from agents.critic import CodeCritic, IdeaCritic
 from agents.hacker import Hacker
 from agents.judge import Judge
 from agents.mastermind import Mastermind
+from agents.planner import Planner
 from core.executor import Executor
 from core.llm import get_llm
 from core.memory import Historian
@@ -56,7 +58,6 @@ def main():
             print(f"Warning: Could not find target file {filepath}")
 
     print("[*] Analyst is parsing source code to create Mechanism Map...")
-    from agents.analyst import Analyst
 
     analyst = Analyst(llm=llm)
     mechanism_map = analyst.generate_mechanism_map(target_files)
@@ -65,8 +66,6 @@ def main():
 
     for i in range(ITERATIONS):
         print(f"\n--- Iteration {i + 1} ---")
-
-        from agents.planner import Planner
 
         planner = Planner(llm=llm, historian=historian)
 
@@ -91,8 +90,8 @@ def main():
             for s in seeds:
                 if s["id"] == selected_seed["id"]:
                     s["used"] = True
-            with open(seed_file, "w") as f:
-                json.dump(seeds, f, indent=2)
+            # with open(seed_file, "w") as f:
+            #     json.dump(seeds, f, indent=2)
         else:
             print(
                 f"[*] Planner is generating directive (Taxonomy Mode: {taxonomy_mode})..."
@@ -330,6 +329,10 @@ def main():
             # 6. Log attempt (Vector DNA)
             print("[*] Historian logging attempt...")
             attempt_id = historian.log_attempt(
+                directive_strategy=strategy,
+                directive_target_browser=target_browser,
+                directive_focus_area=focus_area,
+                directive_reasoning=reasoning,
                 family=family,
                 hypothesis=hypothesis_desc,
                 assumptions=assumptions,
@@ -349,6 +352,10 @@ def main():
             human_tasks_queue.append(
                 {
                     "run_id": run_id,
+                    "strategy": strategy,
+                    "target_browser": target_browser,
+                    "focus_area": focus_area,
+                    "reasoning": reasoning,
                     "family": family,
                     "hypothesis": hypothesis_desc,
                     "assumptions": assumptions,
@@ -385,6 +392,10 @@ def main():
                     outcome_notes = f"Human reported: {user_feedback}"
 
                 attempt_id = historian.log_attempt(
+                    directive_strategy=["strategy"],
+                    directive_target_browser=["target_browser"],
+                    directive_focus_area=["focus_area"],
+                    directive_reasoning=["reasoning"],
                     family=task["family"],
                     hypothesis=task["hypothesis"],
                     assumptions=task["assumptions"],
