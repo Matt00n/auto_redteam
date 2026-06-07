@@ -26,7 +26,7 @@ class IdeaCritic:
             "}"
         )
 
-        user_prompt = f"Memory Portfolio:\n{json.dumps(portfolio, indent=2)}\n\nProposed Hypothesis:\n{hypothesis_raw}"
+        user_prompt = f"Sampled Portfolio of Attempts:\n{portfolio['sampled']}\n\nProposed Hypothesis:\n{hypothesis_raw}"
 
         response = self.llm.generate(
             messages=[

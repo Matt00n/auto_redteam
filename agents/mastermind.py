@@ -1,4 +1,5 @@
 import json
+import random
 
 from core.llm import LLMProvider
 from core.memory import Historian
@@ -28,7 +29,7 @@ class Mastermind:
         mechanism_map: str = None,
         context_mode: str = "raw_code",
         feedback: str = None,
-        parent_attempt: dict = None,
+        parent_attempts: list[dict] = None,
         failed_families: list = None,
     ) -> str:
         """
@@ -89,7 +90,7 @@ class Mastermind:
         elif strategy == "evolution":
             system_prompt += "STRATEGY: Evolve the programmatically selected parent attempt. Analyze why it failed, and propose a structural MUTATION to fix or enhance it. "
         elif strategy == "recombination":
-            system_prompt += "STRATEGY: Take elements from the programmatically selected parent attempt and COMBINE them with other successful strategies or mechanisms into a new hybrid mechanism. "
+            system_prompt += "STRATEGY: Take elements from the programmatically selected parent attempts and COMBINE them into a new hybrid mechanism. "
 
         if feedback:
             system_prompt += f"\n\nCRITIC FEEDBACK FROM PREVIOUS ATTEMPT (YOU MUST ADDRESS THIS):\n{feedback}\n"
@@ -112,36 +113,42 @@ class Mastermind:
         user_prompt = "Planner Directive:\n"
         user_prompt += json.dumps(directive, indent=2) + "\n\n"
 
-        if parent_attempt:
-            user_prompt += "=== Programmatically Selected Parent Attempt ===\n"
-            user_prompt += (
-                json.dumps(
-                    {
-                        "attempt_id": parent_attempt.get("attempt_id"),
-                        "family": parent_attempt.get("family"),
-                        "hypothesis": parent_attempt.get("hypothesis"),
-                        "code": parent_attempt.get("code"),
-                        "result": parent_attempt.get("result"),
-                        "logs": parent_attempt.get("logs"),
-                    },
-                    indent=2,
+        if parent_attempts is not None:
+            for parent_attempt_num, parent_attempt in enumerate(parent_attempts):
+                user_prompt += f"=== Programmatically Selected Parent Attempt {parent_attempt_num + 1} ===\n"
+                user_prompt += (
+                    json.dumps(
+                        {
+                            "attempt_id": parent_attempt.get("attempt_id"),
+                            "family": parent_attempt.get("family"),
+                            "hypothesis": parent_attempt.get("hypothesis"),
+                            # "code": parent_attempt.get("code"),
+                            "result": parent_attempt.get("result"),
+                            "logs": parent_attempt.get("logs"),
+                        },
+                        indent=2,
+                    )
+                    + "\n\n"
                 )
-                + "\n\n"
-            )
 
-        if portfolio and isinstance(portfolio, dict) and portfolio.get("summary"):
-            user_prompt += "=== General History Summary of All Attempts ===\n"
-            user_prompt += portfolio["summary"] + "\n\n"
+        if (
+            strategy == "novel_exploration"
+            and random.random() > 0.5
+            and portfolio.get("sampled", None)
+        ):
+            user_prompt += "=== Sampled Past Attempts ===\n"
+            user_prompt += portfolio["sampled"] + "\n\n"
+            user_prompt += "======\n"
 
-        has_success = False
-        if portfolio and isinstance(portfolio, dict):
-            sampled = portfolio.get("sampled", [])
-            for a in sampled:
-                if a.get("result", {}).get("success"):
-                    has_success = True
+            # has_success = False
+            # if portfolio and isinstance(portfolio, dict):
+            #     sampled = portfolio.get("sampled", [])
+            #     for a in sampled:
+            #         if a.get("result", {}).get("success"):
+            #             has_success = True
 
-        if has_success:
-            user_prompt += "IMPORTANT: The portfolio contains a past attempt that was SUCCESSFUL. Your goal is to evolve this vulnerability. You MUST modify the attack vector in a meaningful way to prove the vulnerability is systemic. Do NOT just copy the exact payload or DOM node.\n\n"
+            # if has_success:
+            user_prompt += "IMPORTANT: If the portfolio contains a past attempt with a score larger than 0: You MUST modify the attack vector in a meaningful way, reusing the exact same vulnerability is not accepted.\n\n"
 
         user_prompt += f"Context Mode: {context_mode}\n"
         if (

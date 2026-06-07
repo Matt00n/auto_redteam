@@ -115,13 +115,30 @@ def main():
         print(f"    Reasoning: {reasoning}")
 
         # Programmatically sample a parent attempt for evolution/recombination strategy
-        parent_attempt = None
-        if strategy in ("evolution", "recombination"):
+        parent_attempts = []
+        if strategy == "evolution":
             parent_attempt = historian.sample_parent_for_mutation()
             if parent_attempt:
                 print(
                     f"[*] Programmatically selected parent attempt for mutation: {parent_attempt.get('attempt_id')} (Family: {parent_attempt.get('family')}, Score: {parent_attempt.get('result', {}).get('score', 0)})"
                 )
+                parent_attempts.append(parent_attempt)
+            else:
+                print(
+                    "[*] No parent attempts found to mutate, falling back to novel exploration strategy."
+                )
+                directive["strategy"] = "novel_exploration"
+                strategy = "novel_exploration"
+        if strategy in ("evolution", "recombination"):
+            parent_attempt = historian.sample_parent_for_mutation()
+            parent_attempt_2 = historian.sample_parent_for_mutation()
+            if parent_attempt and parent_attempt_2:
+                print(
+                    "[*] Programmatically selected parent attempts for recombination:"
+                    f"{parent_attempt.get('attempt_id')} (Family: {parent_attempt.get('family')}, Score: {parent_attempt.get('result', {}).get('score', 0)})"
+                    f"{parent_attempt_2.get('attempt_id')} (Family: {parent_attempt_2.get('family')}, Score: {parent_attempt_2.get('result', {}).get('score', 0)})"
+                )
+                parent_attempts = [parent_attempt, parent_attempt_2]
             else:
                 print(
                     "[*] No parent attempts found to mutate, falling back to novel exploration strategy."
@@ -163,7 +180,7 @@ def main():
                 mechanism_map=mechanism_map,
                 context_mode=context_mode,
                 feedback=idea_feedback,
-                parent_attempt=parent_attempt,
+                parent_attempts=parent_attempts,
                 failed_families=failed_families,
             )
 

@@ -186,7 +186,7 @@ def main():
         with open(seed_file, "r") as f:
             seeds = json.load(f)
 
-    for i in range(3):
+    for i in range(10):
         print(f"iteration {i + 1}")
 
         unused_seeds = [s for s in seeds if not s.get("used", False)]
@@ -214,7 +214,8 @@ def main():
         directive = planner.generate_directive(
             taxonomy_mode=taxonomy_mode, seed=selected_seed
         )
-        print(directive)
+        print(directive) if directive == "fail" else print("success")
+        # print(directive)
 
 
 if __name__ == "__main__":
