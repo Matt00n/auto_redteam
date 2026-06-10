@@ -11,7 +11,7 @@ class Mastermind:
         llm: LLMProvider,
         historian: Historian,
         persona: str = "white-box",
-        model: str = "gemma-heretic",
+        model: str = "gemma4",
         editor_id: str = "textarea1",
         required_chars: int = 200,
     ):

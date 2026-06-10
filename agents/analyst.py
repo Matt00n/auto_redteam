@@ -6,7 +6,7 @@ class Analyst:
     Reads the raw source code and distills it into a dense Mechanism Map.
     """
 
-    def __init__(self, llm: LLMProvider, model: str = "gemma-heretic"):
+    def __init__(self, llm: LLMProvider, model: str = "gemma4"):
         self.llm = llm
         self.model = model
 

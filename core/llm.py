@@ -40,7 +40,7 @@ class OpenAIProvider(LLMProvider):
     def generate(
         self,
         messages: List[Dict[str, str]],
-        model: str = "gemma-heretic",
+        model: str = "gemma4",
         temperature: float = 0.7,
         tools: Optional[List[Dict[str, Any]]] = None,
     ) -> Any:

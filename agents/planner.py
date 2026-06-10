@@ -15,7 +15,7 @@ class Planner:
         self,
         llm: LLMProvider,
         historian: Historian,
-        model: str = "gemma-heretic",
+        model: str = "gemma4",
     ):
         self.llm = llm
         self.model = model

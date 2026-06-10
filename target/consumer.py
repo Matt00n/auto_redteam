@@ -25,9 +25,7 @@ class TextEditorConsumer(AsyncJsonWebsocketConsumer):
         def check_auth(session, taker_id):
             return session.get(f"authenticated_{taker_id}") if session else False
 
-        if not await check_auth(
-            self.scope.get("session"), self.assignment_taker.assignment_taker_id
-        ):
+        if not await check_auth(self.scope.get("session"), assignment_taker_id):
             await self.close(code=4003)
             return
 
@@ -43,8 +41,13 @@ class TextEditorConsumer(AsyncJsonWebsocketConsumer):
             )
             # Give the old connection up to 1 second to release the lock
             for _ in range(25):
+                if self._is_disconnecting:
+                    return
                 await asyncio.sleep(0.2)
+                if self._is_disconnecting:
+                    return
                 if await self.lock.acquire():
+                    logger.info("LOCK acquired %s", assignment_taker_id)
                     break
             else:
                 logger.warning(
@@ -52,6 +55,12 @@ class TextEditorConsumer(AsyncJsonWebsocketConsumer):
                 )
                 await self.close(code=4009)
                 return
+
+        # ZOMBIE GUARD: Abort if client disconnected during the sleep loop
+        if self._is_disconnecting:
+            if hasattr(self, "lock") and await self.lock.owned():
+                await self.lock.release()
+            return
 
         # 3. Load the assignment taker object from DB first
         try:
@@ -100,6 +109,16 @@ class TextEditorConsumer(AsyncJsonWebsocketConsumer):
         if hasattr(self, "heartbeat_task"):
             self.heartbeat_task.cancel()
 
+        # 3. Save user state to the database if initialized
+        if hasattr(self, "assignment_taker"):
+            try:
+                await self.persist_user()
+            except Exception:
+                logger.exception(
+                    "%s persist failed",
+                    getattr(self.assignment_taker, "assignment_taker_id", "<missing>"),
+                )
+
         # 2. Defensively release the Redis lock
         if hasattr(self, "lock"):
             try:
@@ -127,16 +146,6 @@ class TextEditorConsumer(AsyncJsonWebsocketConsumer):
                             "<missing>",
                         ),
                     )
-
-        # 3. Save user state to the database if initialized
-        if hasattr(self, "assignment_taker"):
-            try:
-                await self.persist_user()
-            except Exception:
-                logger.exception(
-                    "%s persist failed",
-                    getattr(self.assignment_taker, "assignment_taker_id", "<missing>"),
-                )
 
     async def _lock_heartbeat(self):
         """Periodically refreshes the Redis lock while connected."""

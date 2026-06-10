@@ -5,7 +5,7 @@ from core.utils import parse_robust_json
 
 
 class IdeaCritic:
-    def __init__(self, llm: LLMProvider, model: str = "gemma-heretic"):
+    def __init__(self, llm: LLMProvider, model: str = "gemma4"):
         self.llm = llm
         self.model = model
 
@@ -53,7 +53,7 @@ class CodeCritic:
     def __init__(
         self,
         llm: LLMProvider,
-        model: str = "gemma-heretic",
+        model: str = "gemma4",
         editor_id: str = "textarea1",
         required_chars: int = 200,
     ):
@@ -71,7 +71,7 @@ class CodeCritic:
             "Criteria for REJECTION:\n"
             "- The script does not actually implement the proposed hypothesis.\n"
             "- The script has obvious Python syntax errors.\n"
-            "- If it uses Playwright, it forgets to target 'http://127.0.0.1:8000' or forgets to wait for network/element readiness.\n"
+            "- If it uses Playwright, it forgets to target 'http://127.0.0.1:8001' or forgets to wait for network/element readiness.\n"
             "- It does not use the provided RUN_ID or ARTIFACT_DIR environment variables if tracing is needed.\n"
             f"- The script does not attempt to insert at least {self.required_chars} characters into the target editor (ID: '{self.editor_id}'). You MUST verify that the script's payload contains/inserts at least this many characters.\n"
             "Output your evaluation strictly as JSON:\n"
