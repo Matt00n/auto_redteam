@@ -29,21 +29,38 @@ class Judge:
             page.click(".submit-btn")
             # Wait for AJAX login to succeed – the editor textarea appears in the DOM
             page.wait_for_selector("#textarea1", timeout=10000)
+            # Allow database session writes to commit and cookies to settle
+            page.wait_for_timeout(500)
             # Reload so the WebSocket connects immediately (no backoff from prior 403s)
             page.reload()
+            # page.wait_for_function("""
+            # () => {
+            #     const status = document.getElementById('connectionStatus');
+            #     return status && status.innerText.includes('Connected');
+            # }
+            # """, timeout=15000)
             page.wait_for_load_state("networkidle")
 
         # Wait for the editor textarea to exist (covers both fresh-load and post-login-reload)
         page.wait_for_selector("#textarea1", timeout=10000)
         # Wait for the WebSocket 'init' message to populate the field and unlock the editor.
         # The frontend sets textarea.disabled = false in socket.onopen, so we wait for that.
-        page.wait_for_function(
-            "() => { const el = document.getElementById('textarea1'); return el && !el.disabled; }",
-            timeout=15000,
-        )
-        # Small additional grace period for the 'init' message payload to arrive and
-        # DOM.editor.value to be set (onmessage fires after onopen).
-        page.wait_for_timeout(1000)
+        try:
+            page.wait_for_function(
+                "() => { const el = document.getElementById('textarea1'); return el && !el.disabled; }",
+                timeout=15000,
+            )
+            # Short grace period for initial state payload to be evaluated by onmessage
+            page.wait_for_timeout(500)
+        except Exception as e:
+            # Diagnostic capture: what is the connection status bar currently showing?
+            status_text = ""
+            if page.locator("#connectionStatus").count() > 0:
+                status_text = page.locator("#connectionStatus").inner_text()
+            raise Exception(
+                f"Editor lock verification failed. UI element state remained disabled. "
+                f"Current Frontend Status Banner: '{status_text}'. Internal Error: {e}"
+            )
 
     def reset_target_state(self, assignment_taker_id: str):
         """
@@ -64,18 +81,29 @@ class Judge:
                 # Simulate a real user deleting all text to ensure the WS backend gets the delete event
                 textarea = page.locator("#textarea1")
                 textarea.click()
-                page.keyboard.press("Control+A")
-                page.keyboard.press("Meta+A")  # Fallback for macOS
-                page.keyboard.press("Backspace")
+                # page.keyboard.press("Control+A")
+                # page.keyboard.press("Backspace")
+                # print(page.locator("#textarea1").input_value())
+                # page.keyboard.press("Meta+A")  # Fallback for macOS
+                # page.keyboard.press("Backspace")
+                # 2. Fetch the current text to determine its length
+                text_value = textarea.input_value()
+                text_length = len(text_value)
+                page.keyboard.press("End")
+
+                # 4. Loop and press Backspace for each character
+                for _ in range(text_length):
+                    page.keyboard.press("Backspace")
 
                 # Wait for the WebSocket to sync the deletion to the backend
                 page.wait_for_timeout(2000)
 
                 # Reload the page to verify the backend actually saved the empty state
+                print(page.locator("#textarea1").input_value())
                 page.reload()
                 page.wait_for_load_state("networkidle")
                 self._ensure_authenticated(page)
-
+                print(page.locator("#textarea1").input_value())
                 text = page.locator("#textarea1").input_value()
                 if len(text) > 0:
                     raise Exception(

@@ -14,7 +14,7 @@ from core.llm import get_llm
 from core.memory import Historian
 from core.utils import parse_robust_json
 
-ITERATIONS = 2
+ITERATIONS = 5
 LOCAL = True
 
 
@@ -29,9 +29,7 @@ def main():
         )
         return
 
-    target_url = (
-        "http://localhost:8000/assignments/0de7199b-80ba-4686-839b-aacff2025cc5"
-    )
+    target_url = "http://127.0.0.1:8001/assignments/0de7199b-80ba-4686-839b-aacff2025cc5"  # "http://localhost:8000/assignments/0de7199b-80ba-4686-839b-aacff2025cc5"
     assignment_taker_id = "0de7199b-80ba-4686-839b-aacff2025cc5"
 
     editor_id = "textarea1"

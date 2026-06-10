@@ -53,6 +53,7 @@ class OpenAIProvider(LLMProvider):
             "model": model,
             "messages": messages,
             # "temperature": temperature,
+            "max_tokens": 128000,
         }
         if tools:
             kwargs["tools"] = tools

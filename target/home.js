@@ -29,7 +29,6 @@
         previewModal: null,
         modalContent: null,
         deadline: null,
-        deadline: null,
         connectionStatus: null,
         splitPreviewPane: null
     };
@@ -106,16 +105,24 @@
             return;
         }
 
-        // Cleanup existing socket and timer
-        if (GlobalState.socket) {
-            // Remove listeners to prevent zombie callbacks
-            GlobalState.socket.onopen = null;
-            GlobalState.socket.onclose = null;
-            GlobalState.socket.onerror = null;
-            GlobalState.socket.onmessage = null;
-            GlobalState.socket.close();
-            GlobalState.socket = null;
+        // CRITICAL FIX: Guard against disrupting active or ongoing connection sequences
+        if (GlobalState.socket && (GlobalState.socket.readyState === WebSocket.OPEN || GlobalState.socket.readyState === WebSocket.CONNECTING)) {
+            console.log("WebSocket is already active or connecting. Skipping initialization.");
+            return;
         }
+
+        // Cleanup existing socket and timer
+        // if (GlobalState.socket) {
+        //     // Remove listeners to prevent zombie callbacks
+        //     GlobalState.socket.onopen = null;
+        //     GlobalState.socket.onclose = null;
+        //     GlobalState.socket.onerror = null;
+        //     GlobalState.socket.onmessage = null;
+        //     GlobalState.socket.close();
+        //     GlobalState.socket = null;
+        // }
+
+        // Cleanup stale backoff timers
         if (GlobalState.reconnectTimer) {
             clearTimeout(GlobalState.reconnectTimer);
             GlobalState.reconnectTimer = null;
@@ -166,10 +173,12 @@
                 return;
             }
 
-            // If superseded by another tab (4009), permanently disconnect
+            // If superseded by another tab (4009), permanently disconnect (No Auto-Reconnect Loop Allowed)
             if (e.code === 4009) {
                 setEditorLock(true);
                 updateConnectionStatus('superseded');
+                if (GlobalState.reconnectTimer) clearTimeout(GlobalState.reconnectTimer);
+                GlobalState.socket = null;
                 return;
             }
 
@@ -183,7 +192,10 @@
 
                 GlobalState.reconnectAttempts++;
                 console.log(`Scheduling reconnect in ${backoffSeconds}s (Attempt ${GlobalState.reconnectAttempts})...`);
-                GlobalState.reconnectTimer = setTimeout(initWebSocket, backoffSeconds * 1000);
+                GlobalState.reconnectTimer = setTimeout(() => {
+                    GlobalState.reconnectTimer = null; // Reset pointer before execution
+                    initWebSocket();
+                }, backoffSeconds * 1000);
             }
         };
 
@@ -242,6 +254,9 @@
 
     function handleOffline() {
         setEditorLock(true);
+        if (DOM.connectionStatus && DOM.connectionStatus.classList.contains('status-superseded')) {
+            return;
+        }
         updateConnectionStatus('reconnecting'); // Show reconnecting status immediately
     }
 

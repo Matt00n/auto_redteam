@@ -39,7 +39,9 @@ class IdeaCritic:
         try:
             return parse_robust_json(response.content)
         except (json.JSONDecodeError, ValueError):
-            print(f"\tError extracting JSON from LLM response: {response.content}")
+            print(
+                f"\tError extracting JSON from Idea Critic response: {response.content}"
+            )
             # Fallback
             return {
                 "approved": True,
@@ -92,7 +94,9 @@ class CodeCritic:
         try:
             return parse_robust_json(response.content)
         except (json.JSONDecodeError, ValueError):
-            print(f"\tError extracting JSON from LLM response: {response.content}")
+            print(
+                f"\tError extracting JSON from Code Critic response: {response.content}"
+            )
             return {
                 "approved": True,
                 "feedback": "Parse error, defaulting to approved.",
