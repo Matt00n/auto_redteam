@@ -99,11 +99,9 @@ class Judge:
                 page.wait_for_timeout(2000)
 
                 # Reload the page to verify the backend actually saved the empty state
-                print(page.locator("#textarea1").input_value())
                 page.reload()
                 page.wait_for_load_state("networkidle")
                 self._ensure_authenticated(page)
-                print(page.locator("#textarea1").input_value())
                 text = page.locator("#textarea1").input_value()
                 if len(text) > 0:
                     raise Exception(

@@ -14,7 +14,7 @@ from core.llm import get_llm
 from core.memory import Historian
 from core.utils import parse_robust_json
 
-ITERATIONS = 5
+ITERATIONS = 50
 LOCAL = True
 
 

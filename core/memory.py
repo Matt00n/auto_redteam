@@ -213,7 +213,7 @@ class Historian:
         pruned_families = set()
         for fam, scores in family_scores.items():
             # If a family has 3 or more attempts and has never scored above 0.0
-            if len(scores) >= 20 and max(scores) == 0.0:
+            if len(scores) >= 100 and max(scores) == 0.0:
                 pruned_families.add(fam)
 
         if not pruned_families:
